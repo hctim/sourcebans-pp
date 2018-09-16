@@ -80,7 +80,8 @@ function KickPlayer($check, $sid, $num, $type)
     }
 
     //get the server data
-    $sdata = $GLOBALS['db']->GetRow("SELECT ip, port, rcon FROM " . DB_PREFIX . "_servers WHERE sid = '" . $sid . "';");
+    $sdata = $GLOBALS['db']->GetRow("SELECT ip, port, rcon FROM " . DB_PREFIX . "_servers WHERE sid = ?;",
+        array($sid));
 
     //test if server is online
     if ($test = @fsockopen($sdata['ip'], $sdata['port'], $errno, $errstr, 2)) {
@@ -90,7 +91,8 @@ function KickPlayer($check, $sid, $num, $type)
         $r = new CServerRcon($sdata['ip'], $sdata['port'], $sdata['rcon']);
 
         if (!$r->Auth()) {
-            $GLOBALS['db']->Execute("UPDATE " . DB_PREFIX . "_servers SET rcon = '' WHERE sid = '" . $sid . "' LIMIT 1;");
+            $GLOBALS['db']->Execute("UPDATE " . DB_PREFIX . "_servers SET rcon = '' WHERE sid = ? LIMIT 1;",
+                array($sid));
             $objResponse->addAssign("srv_$num", "innerHTML", "<font color='red' size='1'>Wrong RCON Password, please change!</font>");
             $objResponse->addScript('set_counter(1);');
             return $objResponse;
@@ -113,7 +115,8 @@ function KickPlayer($check, $sid, $num, $type)
                 if (\SteamID\SteamID::toSteam2($match) === \SteamID\SteamID::toSteam2($check)) {
                     // gotcha!!! kick him!
                     $gothim = true;
-                    $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_bans` SET sid = '" . $sid . "' WHERE authid = '" . $check . "' AND RemovedBy IS NULL;");
+                    $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_bans` SET sid = ? WHERE authid = ? AND RemovedBy IS NULL;",
+                        array($sid, $check));
                     $requri = substr($_SERVER['REQUEST_URI'], 0, strrpos($_SERVER['REQUEST_URI'], "pages/admin.kickit.php"));
 
                     $kick = $r->sendCommand("kickid " . $match . " \"You have been banned by this server, check http://" . $_SERVER['HTTP_HOST'] . $requri . " for more info.\"");
@@ -132,7 +135,8 @@ function KickPlayer($check, $sid, $num, $type)
                     $userid = $matches[1][$id];
                     // gotcha!!! kick him!
                     $gothim = true;
-                    $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_bans` SET sid = '" . $sid . "' WHERE ip = '" . $check . "' AND RemovedBy IS NULL;");
+                    $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_bans` SET sid = ? WHERE ip = ? AND RemovedBy IS NULL;",
+                        array($sid, $check));
                     $requri = substr($_SERVER['REQUEST_URI'], 0, strrpos($_SERVER['REQUEST_URI'], "pages/admin.kickit.php"));
                     $kick   = $r->sendCommand("kickid " . $userid . " \"You have been banned by this server, check http://" . $_SERVER['HTTP_HOST'] . $requri . " for more info.\"");
                     $objResponse->addAssign("srv_$num", "innerHTML", "<font color='green' size='1'><b><u>Player Found & Kicked!!!</u></b></font>");
