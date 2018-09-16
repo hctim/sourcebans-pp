@@ -81,7 +81,7 @@ function BlockPlayer($check, $sid, $num, $type, $length)
     }
 
     //get the server data
-    $sdata = $GLOBALS['db']->GetRow("SELECT ip, port, rcon FROM " . DB_PREFIX . "_servers WHERE sid = '" . $sid . "';");
+    $sdata = $GLOBALS['db']->GetRow("SELECT ip, port, rcon FROM " . DB_PREFIX . "_servers WHERE sid = ?;", array($sid));
 
     //test if server is online
     if ($test = @fsockopen($sdata['ip'], $sdata['port'], $errno, $errstr, 2)) {
@@ -91,7 +91,7 @@ function BlockPlayer($check, $sid, $num, $type, $length)
         $r = new CServerRcon($sdata['ip'], $sdata['port'], $sdata['rcon']);
 
         if (!$r->Auth()) {
-            $GLOBALS['db']->Execute("UPDATE " . DB_PREFIX . "_servers SET rcon = '' WHERE sid = '" . $sid . "' LIMIT 1;");
+            $GLOBALS['db']->Execute("UPDATE " . DB_PREFIX . "_servers SET rcon = '' WHERE sid = ? LIMIT 1;", array($sid));
             $objResponse->addAssign("srv_$num", "innerHTML", "<font color='red' size='1'>Wrong RCON Password, please change!</font>");
             $objResponse->addScript('set_counter(1);');
             return $objResponse;
@@ -114,7 +114,8 @@ function BlockPlayer($check, $sid, $num, $type, $length)
             if (substr($match, 8) == substr($check, 8)) {
                 // gotcha!!! kick him!
                 $gothim = true;
-                $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_comms` SET sid = '" . $sid . "' WHERE authid = '" . $check . "' AND RemovedBy IS NULL;");
+                $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_comms` SET sid = ? WHERE authid = ? AND RemovedBy IS NULL;",
+                    array($sid, $check));
                 $requri = substr($_SERVER['REQUEST_URI'], 0, strrpos($_SERVER['REQUEST_URI'], "pages/admin.blockit.php"));
                 $kick   = $r->sendCommand("sc_fw_block " . $type . " " . $length . " " . $match);
                 $objResponse->addAssign("srv_$num", "innerHTML", "<font color='green' size='1'><b><u>Player Found & blocked!</u></b></font>");
